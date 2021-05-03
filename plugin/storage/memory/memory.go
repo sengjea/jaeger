@@ -154,7 +154,13 @@ func (m *Store) WriteSpan(ctx context.Context, span *model.Span) error {
 
 	}
 	m.traces[span.TraceID].Spans = append(m.traces[span.TraceID].Spans, span)
-
+	for _, ref := range span.References {
+		if ref.TraceID != span.TraceID {
+			if _, ok := m.traces[ref.TraceID]; ok {
+				m.traces[ref.TraceID].Spans = append(m.traces[ref.TraceID].Spans, span)
+			}
+		}
+	}
 	return nil
 }
 

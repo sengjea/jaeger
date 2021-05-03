@@ -71,10 +71,12 @@ func newDatabase(tracer opentracing.Tracer, logger log.Factory) *database {
 
 func (d *database) Get(ctx context.Context, customerID string) (*Customer, error) {
 	d.logger.For(ctx).Info("Loading customer", zap.String("customer_id", customerID))
-
+	dspan := d.tracer.StartSpan("Get")
+	defer dspan.Finish()
 	// simulate opentracing instrumentation of an SQL query
 	if span := opentracing.SpanFromContext(ctx); span != nil {
-		span := d.tracer.StartSpan("SQL SELECT", opentracing.ChildOf(span.Context()))
+			
+		span := d.tracer.StartSpan("SQL SELECT", opentracing.ChildOf(dspan.Context()), opentracing.FollowsFrom(span.Context()))
 		tags.SpanKindRPCClient.Set(span)
 		tags.PeerService.Set(span, "mysql")
 		// #nosec
